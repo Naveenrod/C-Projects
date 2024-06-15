@@ -1,0 +1,374 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+#include <fstream>
+#include <sstream>
+
+using namespace std;
+
+//custom exception for error handling
+class DataException : public exception
+{
+    private:
+        string message;
+    public:
+        DataException(const string &msg) : message(msg) {}
+        const char *what() const throw()
+        {
+            return message.c_str();
+        }
+};
+
+//class to decode a message
+class DiamondDecoder
+{
+    private:
+        int grid_size;
+        vector<vector<char>> grid;
+        string decodedMessage;
+
+        //function to calculate the grid size
+        int calculateGridSize(int messageLength)
+        {
+            return static_cast<int>(ceil(sqrt(messageLength)));
+        }
+
+        //function to return the square if an odd integer
+        bool squareOfOddIntiger(int length)
+        {
+            int root = static_cast<int>(sqrt(length));
+            return (root * root == length) && (root % 2 == 1);
+        }
+
+    public:
+        //function to decode the message
+        string decodeMessage(string Message)
+        {
+            decodedMessage.clear();
+            int messageLength = Message.size();
+
+            if (!squareOfOddIntiger(messageLength))
+            {
+                cout << "Error: The length of the encoded message is not a square of an odd integer." << endl;
+            }
+            else
+            {
+                grid_size = calculateGridSize(messageLength);
+                grid.resize(grid_size, vector<char>(grid_size, ' '));
+                int messageIndex = 0;
+
+                for (int i = 0; i < grid_size; ++i)
+                {
+                    for (int j = 0; j < grid_size; ++j)
+                    {
+                        grid[i][j] = Message[messageIndex++];
+                    }
+
+                }
+                int r = grid_size / 2;
+                int c = 0;
+                int length = grid_size / 2;
+
+                while (length !=0)
+                {
+                    for (int i = 0; i < length; ++i)
+                    {
+                        decodedMessage += grid[r][c];
+                        r--;
+                        c++;
+                    }
+                    for (int i = 0; i < length; i++)
+                    {
+                        decodedMessage += grid[r][c];
+                        r++;
+                        c++;
+                    }
+                    for (int i = 0; i < length; i++)
+                    {
+                        decodedMessage += grid[r][c];
+                        r++;
+                        c--;
+                    }
+                    for(int i = 0; i < length; i++)
+                    {
+                        decodedMessage += grid[r][c];
+                        r--;
+                        c--;
+                    }
+                    c++;
+                    length--;
+                }
+                decodedMessage += grid[r][c];
+            }
+            return decodedMessage;
+        }
+
+};
+
+//class to encode a message
+class DiamondEncoder
+{
+    private:
+        int grid_size;
+        vector<vector<char>> Newgrid;
+        string encodedMessage;
+
+        //function to calculate the grid size
+        int calculateGridSize(int messageLength)
+        {
+            return static_cast<int>(ceil(sqrt(messageLength)));
+        }
+
+        //function to find the next perfect odd square
+        int findNextPerfectSquare(int length)
+        {
+            int side = static_cast<int>(ceil(sqrt(length)));
+            if (side % 2 == 0)
+            {
+                side ++;
+            }
+            return side * side;
+        }
+
+    public:
+        //function to encode the message
+        string encodeMessage(string Message)
+        {
+            encodedMessage.clear();
+            char value;
+            int messageLength = Message.size();
+            grid_size = calculateGridSize(messageLength);
+
+            cout << "Wish to enter grid size(Y/N): ";
+            while (!(cin >> value) || !(tolower(value) == 'y' || tolower(value) == 'n'))
+            {
+                cout << "Invalid input. Wish to enter grid size(Y/N): ";
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            }
+
+            if (value == 'N')
+            {
+                int nextPerfectSquare = findNextPerfectSquare(messageLength);
+                grid_size = static_cast<int>(sqrt(nextPerfectSquare));
+            }
+            else
+            {
+                int user_grid_Size;
+                cout << "Enter Grid Size: ";
+                while(!(cin >> user_grid_Size))
+                {
+                    cout << "Invalid input. Please Enter an integer: ";
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+                while (user_grid_Size <= calculateGridSize(messageLength))
+                {
+                    cout << "Grid Size Should be greater than " << calculateGridSize(messageLength) << " : ";
+                    cin >> user_grid_Size;   
+                }
+                grid_size = user_grid_Size;
+            }
+            Newgrid.resize(grid_size, vector<char>(grid_size, ' '));
+
+            int messageIndex = 0;
+            int r = grid_size / 2;
+            int c = 0;
+            int length = grid_size / 2;
+
+            while (length !=0)
+            {
+                for (int i = 0; i < length; ++i)
+                {
+                    Newgrid[r][c] = Message[messageIndex++];
+                    r--;
+                    c++;
+                }
+                for (int i = 0; i < length; i++)
+                {
+                    Newgrid[r][c] = Message[messageIndex++];
+                    r++;
+                    c++;
+                }
+                for (int i = 0; i < length; i++)
+                {
+                    Newgrid[r][c] = Message[messageIndex++];
+                    r++;
+                    c--;
+                }
+                for(int i = 0; i < length; i++)
+                {
+                    Newgrid[r][c] = Message[messageIndex++];
+                    r--;
+                    c--;
+                }
+                c++;
+                length--;
+            }
+            Newgrid[r][c] = Message[messageIndex++];
+
+            for (int i = 0; i < grid_size; ++i)
+            {
+                for (int j = 0; j < grid_size; ++j)
+                {
+                    if (Newgrid[i][j] == ' ')
+                    {
+                        Newgrid[i][j] = 'A' + (rand() % 26);
+                    }
+                    encodedMessage += Newgrid[i][j];
+                }
+            }
+            return encodedMessage;
+        }
+
+};
+
+//class consisting the main menu of the interface
+class Interface
+{
+    public:
+        void view()
+        {
+            cout << "**********************************************************" << endl;
+            cout << "* 1, Enter a message.                                    *" << endl;
+            cout << "* 2, Load a message from file.                           *" << endl;
+            cout << "* 3, Encode a message.                                   *" << endl;
+            cout << "* 4, Decode a message.                                   *" << endl;
+            cout << "* 5, Save the message & decoded message to a file.       *" << endl;
+            cout << "* 6, Quit.                                               *" << endl;
+            cout << "**********************************************************" << endl;
+        }
+};
+
+int main()
+{
+    DiamondDecoder decoder;
+    DiamondEncoder encoder;
+
+    char choice;
+    string filename;
+    string message, decodedMessage, encodedMessage;
+    
+    while(true)
+    {
+        Interface interface;
+        interface.view();
+
+        cout << "Enter your choice: ";
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        try
+        {
+            switch (choice)
+            {
+            case '1':
+                cout << "Enter a message: ";
+                getline(cin, message);
+
+                if (!message.empty())
+                {
+                    cout << "Message: " << message << endl;
+                }
+                else
+                {
+                    throw DataException("Error: Empty message");
+                }
+                
+                break;
+            case '2':
+                cout << "Enter filename: ";
+                cin >> filename;
+                {
+                    ifstream file(filename);
+                    if(file.is_open())
+                    {
+                        try
+                        {
+                            message.clear();
+                            getline(file, message);
+                            file.close();
+
+                            cout << "Message loaded sucessfully: " << message << endl;
+                        }
+                        catch(const std::exception& e)
+                        {
+                            std::cerr << e.what() << '\n';
+                        }
+                    }
+                    else
+                    {
+                        throw DataException ("Error: couldn't open file.");
+                    }
+                }
+                break;
+
+            case '3':
+                cout << endl << "Enter message to be encoded: ";
+                getline(cin, message);
+                if (!message.empty())
+                {
+                    encodedMessage = encoder.encodeMessage(message);
+                    cout << endl << "Message encoded sucessfully" << endl;
+                    cout << "Encoded message: " << encodedMessage << endl;
+                }
+                else
+                {
+                    throw DataException("Error: Empty message");
+                }
+                break;
+
+            case '4':
+                cout << endl << "Enter message to be decoded: ";
+                cin >> encodedMessage;
+                decodedMessage = decoder.decodeMessage(encodedMessage);
+                if (!decodedMessage.empty())
+                {
+                    cout << endl << "Message decoded sucessfully" << endl;
+                    cout << "Decoded message: " << decodedMessage << endl;
+                }
+                break;
+
+            case '5':
+                cout << "Enter filename to save the message and the deoded message: ";
+                getline(cin, filename);
+                {
+                    ofstream file(filename);
+                    if(file.is_open())
+                    {
+                        try
+                        {
+                            file << message << endl;
+                            file << decodedMessage << endl;
+                            file.close();
+                        }
+                        catch(const std::exception& e)
+                        {
+                            std::cerr << e.what() << '\n';
+                        }
+                    }
+                    else
+                    {
+                        throw DataException ("Error: couldn't open file.");
+                    }
+                }
+                break;
+
+            case '6':
+                return 0;
+                break;
+            
+            default:
+                throw DataException ("Invalid choice. Please try again");
+                break;
+            }
+        }
+        catch(const DataException &e)
+        {
+            cerr << e.what() << '\n';
+        }
+        
+    }
+    return 0;
+}
