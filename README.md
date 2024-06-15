@@ -1,1 +1,1 @@
-A program capable of both encoding and decoding any message.
+A program capable of both encoding and decoding any message in a diamond shape.
